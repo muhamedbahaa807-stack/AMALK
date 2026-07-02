@@ -1,14 +1,11 @@
-import logo from '../images/logo.png'
-
+import { FaRegHospital } from "react-icons/fa";
 const Hero = () => {
   return (
-    <section className="relative h-[500px] overflow-hidden">
-      <div className="absolute left-[-150px] top-[-150px] h-[500px] w-[500px] rounded-[50%] bg-blue-800 opacity-80 blur-[180px]"></div>
-      <div className="absolute right-[-150px] top-[-150px] h-[700px] w-[1000px] rounded-[50%] bg-zinc-900 opacity-80 blur-[180px]"></div>
-
+    <section className="relative h-[300px] overflow-hidden rounded-[40%] bg-[#EEF6FF] transition-all duration-500 hover:rounded-[0%]">
       <div className="relative z-10 flex flex-col items-center pt-10">
-        <img src={logo} alt="Logo" className="w-[450px] max-w-[80%]" />
-        <p className="mt-3 text-black font-black">This is <span className='text-blue-700'>AMALK</span> hospital website ,you can book,edit and cancel any Reservation</p>
+        <FaRegHospital className="text-6xl text-[#14B8A6] m-4 text-center" />
+        <h1 className="text-4xl font-bold text-[#14B8A6]">Welcome to <span className="text-[#012553] bg-[#EEF6FF] p-[2px] rounded-[4px]"> AMALK </span>Hospital</h1>
+        <p className="mt-4 text-lg text-[#121212]">Providing quality healthcare services with compassion and excellence.</p>
       </div>
     </section>
   )

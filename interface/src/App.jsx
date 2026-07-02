@@ -1,8 +1,11 @@
-import React from 'react'
-
+import Nav from './components/nav.jsx'
+import Hero from './components/Hero.jsx'
 const App = () => {
   return (
-    <div>App</div>
+    <>
+      <Nav />
+      <Hero />
+    </>
   )
 }
 

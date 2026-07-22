@@ -1,13 +1,11 @@
 import { Router } from 'express';
 import User from '../../models/User.js';
-import { hashing } from '../helpers/hashPass.js';
+import { hashing, comparePass } from '../helpers/hashPass.js';
 import { validSchema } from '../utils/validation.js';
 import { validationResult, checkSchema, matchedData } from 'express-validator';
-import '../strategies/local.js';
-import passport from 'passport';
-
+import { generateAccessToken, generateRefreshToken } from '../utils/jwt.js';
 const router = Router();
-router.post('/users/signUP', checkSchema(validSchema), async (req, res) => {
+router.post('/signUP', checkSchema(validSchema), async (req, res) => {
   const result = validationResult(req);
   if (!result.isEmpty()) return res.status(400).send({ error: result.array() });
 
@@ -22,36 +20,48 @@ router.post('/users/signUP', checkSchema(validSchema), async (req, res) => {
     .json({ msg: 'Your acc has succsefully created,now you can log in' });
 });
 
-router.post('/users/signIn', (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
-    if (err) {
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-
-    if (!user) {
-      return res
-        .status(401)
-        .json({ error: info ? info.message : 'Login failed' });
-    }
-
-    req.logIn(user, (err) => {
-      if (err) return next(err);
-      return res.status(200).json(req.user);
+router.post('/signIn', async (req, res, next) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(401).json({
+      error: 'Email or password is incorrect',
     });
-  })(req, res, next);
+  }
+  const ismatching = comparePass(password, user.password);
+  if (!ismatching)
+    return res.status(404).json({
+      error: 'Email or password is incorrect',
+    });
+
+  try {
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 60000 * 60 * 24,
+    });
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    };
+    res.send({ message: 'LogIN successfully', userData, accessToken });
+  } catch (err) {
+    return res.status(500).json({
+      error: 'Internal Server Error',
+    });
+  }
 });
-router.post('/users/logOut', (req, res, next) => {
-  req.logout((err) => {
-    if (err) {
-      return next(err);
-    }
+router.post('/logOut', (req, res) => {
+  res.clearCookie('refreshToken');
 
-    req.session.destroy((err) => {
-      if (err) return next(err);
-
-      res.clearCookie('connect.sid');
-      return res.status(200).json({ msg: 'Logged out successfully' });
-    });
+  return res.status(200).json({
+    message: 'Logged out successfully',
   });
 });
 

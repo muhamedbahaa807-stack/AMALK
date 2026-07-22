@@ -1,12 +1,35 @@
-import Nav from './components/nav.jsx'
-import Hero from './components/Hero.jsx'
+import {
+  Route,
+  createBrowserRouter,
+  createRoutesFromElements,
+  RouterProvider,
+} from 'react-router-dom';
+import MainLayout from './layouts/MainLayouts.jsx';
+import HomePage from './pages/HomePage.jsx';
+import SignupPage from './pages/SignupPage.jsx';
+import LoginPage from './pages/loginPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
+import ChangePassword from './pages/ChangePassword.jsx';
+import UpdateProfile from './pages/UpdateProfile.jsx';
+import New_appointmentPage from './pages/New_appointmentPage.jsx';
+import NotFoundPage from './pages/notFoundPage.jsx';
 const App = () => {
-  return (
-    <>
-      <Nav />
-      <Hero />
-    </>
-  )
-}
+  const router = createBrowserRouter(
+    createRoutesFromElements(
+      <Route path="/" element={<MainLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="/signUP" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/change_password" element={<ChangePassword />} />
+        <Route path="/update_profile" element={<UpdateProfile />} />
+        <Route path="/new_appointment" element={<New_appointmentPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>,
+    ),
+  );
 
-export default App
+  return <RouterProvider router={router} />;
+};
+
+export default App;

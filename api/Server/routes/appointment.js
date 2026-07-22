@@ -1,13 +1,12 @@
 import { Router } from 'express';
-import { ensureAuthenticated, isAdmin } from '../utils/middlewares.js';
+import { verfiyAccessToken, isAdmin } from '../utils/middlewares.js';
 import Appointment from '../../models/Appointment.js';
 const router = Router();
 
-router.post('/appointment', ensureAuthenticated, async (req, res) => {
+router.post('/appointment', verfiyAccessToken, async (req, res) => {
   try {
     const { departmentId, date, Slot } = req.body;
     const userId = req.user._id;
-
     if (!departmentId || !date || !Slot) {
       return res
         .status(400)
@@ -65,7 +64,7 @@ router.post('/appointment', ensureAuthenticated, async (req, res) => {
   }
 });
 
-router.get('/appointment/my', ensureAuthenticated, async (req, res) => {
+router.get('/appointment/my', verfiyAccessToken, async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -79,7 +78,7 @@ router.get('/appointment/my', ensureAuthenticated, async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-router.put('/appointment/:id/cancel', ensureAuthenticated, async (req, res) => {
+router.put('/appointment/:id/cancel', verfiyAccessToken, async (req, res) => {
   try {
     const { id } = req.params;
     const appointment = await Appointment.findById(id);
@@ -111,7 +110,7 @@ router.put('/appointment/:id/cancel', ensureAuthenticated, async (req, res) => {
 
 router.put(
   '/appointment/:id/request-edit',
-  ensureAuthenticated,
+  verfiyAccessToken,
   async (req, res) => {
     try {
       const { id } = req.params;
@@ -169,7 +168,7 @@ router.put(
   },
 );
 
-router.get('/', ensureAuthenticated, isAdmin, async (req, res) => {
+router.get('/', verfiyAccessToken, isAdmin, async (req, res) => {
   try {
     const allAppointments = await Appointment.find()
       .populate('userId', 'name email')
@@ -183,7 +182,7 @@ router.get('/', ensureAuthenticated, isAdmin, async (req, res) => {
   }
 });
 
-router.put('/:id/status', ensureAuthenticated, isAdmin, async (req, res) => {
+router.put('/:id/status', verfiyAccessToken, isAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;

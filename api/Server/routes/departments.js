@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ensureAuthenticated, isAdmin } from '../utils/middlewares.js';
+import { verfiyAccessToken, isAdmin } from '../utils/middlewares.js';
 import {
   departmentValidayionSchema,
   departmentUpdateSchema,
@@ -31,7 +31,7 @@ router.get('/departments', async (req, res) => {
 
 router.post(
   '/departments',
-  ensureAuthenticated,
+  verfiyAccessToken,
   isAdmin,
   checkSchema(departmentValidayionSchema),
   async (req, res) => {
@@ -66,7 +66,7 @@ router.get('/departments/:id', async (req, res) => {
 
 router.put(
   '/departments/:id',
-  ensureAuthenticated,
+  verfiyAccessToken,
   isAdmin,
   checkSchema(departmentUpdateSchema),
   async (req, res) => {
@@ -166,7 +166,7 @@ router.get('/departments/:id/available-slots', async (req, res) => {
 
 router.delete(
   '/departments/:id',
-  ensureAuthenticated,
+  verfiyAccessToken,
   isAdmin,
   async (req, res) => {
     try {

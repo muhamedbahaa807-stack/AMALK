@@ -1,52 +1,83 @@
 import { Router } from 'express';
-import { ensureAuthenticated } from '../utils/middlewares.js';
 import { updateSchema } from '../utils/validation.js';
 import User from '../../models/User.js';
 import { validationResult, checkSchema, matchedData } from 'express-validator';
+import { verfiyAccessToken } from '../utils/middlewares.js';
+import jwt from 'jsonwebtoken';
+import { generateAccessToken } from '../utils/jwt.js';
+import { comparePass } from '../helpers/hashPass.js';
 const router = Router();
-router.get('/users/profile', ensureAuthenticated, (req, res) => {
-  // بما أنه مسجل دخول، بياناته كاملة متوفرة في req.user بفضل الـ deserializeUser
-  res.status(200).json({
-    msg: 'Welcome to your profile',
-    user: {
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-    },
-  });
+router.get('/users/profile', verfiyAccessToken, (req, res) => {
+  res.status(200).json(req.user);
 });
 
-router.put(
-  '/users/updateprofile',
-  ensureAuthenticated,
-  checkSchema(updateSchema),
-  async (req, res) => {
-    const result = validationResult(req);
-    if (!result.isEmpty()) {
-      return res.status(400).send({ error: result.array() });
-    }
+router.post('/users/refresh', async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
 
-    const dataToUpdate = matchedData(req);
-
-    if (Object.keys(dataToUpdate).length === 0) {
-      return res.status(400).json({ error: 'No data provided to update' });
-    }
-
-    try {
-      const updatedUser = await User.findByIdAndUpdate(
-        req.user._id,
-        { $set: dataToUpdate },
-        { new: true, runValidators: true },
-      ).select('-password');
-      req.user = updatedUser;
-
-      return res.status(200).json({
-        msg: 'Profile updated successfully',
-        user: updatedUser,
+    if (!refreshToken) {
+      return res.status(401).json({
+        error: 'Something wrong',
       });
-    } catch (err) {
-      return res.status(500).json({ error: 'Internal Server Error' });
     }
-  },
-);
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    const user = await User.findById(decoded.id).select('-password');
+
+    if (!user) {
+      return res.status(401).json({
+        error: 'User not found',
+      });
+    }
+
+    const accessToken = generateAccessToken(user);
+
+    return res.status(200).json({
+      accessToken,
+    });
+  } catch (err) {
+    return res.status(401).json({
+      error: 'Invalid or expired refresh token',
+    });
+  }
+});
+
+router.put('/users/updateprofile', verfiyAccessToken, async (req, res) => {
+  const { body } = req;
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: body },
+      { new: true, runValidators: true },
+    ).select('-password');
+    req.user = updatedUser;
+
+    return res.status(200).json({ user: updatedUser });
+  } catch (err) {
+    return res.status(500).send('Internal Server Error');
+  }
+});
+router.post('/users/Change_Pass', verfiyAccessToken, async (req, res) => {
+  const { body } = req;
+  const user = await User.findById(req.user.id);
+  const ifPassExist = comparePass(body.password, user.password);
+  if (!ifPassExist) {
+    return res.status(404).send({
+      error: 'It is not the current password',
+    });
+  }
+  if (body.password === body.newPass) {
+    return res.status(400).send({ error: 'New password must be different' });
+  }
+  const nPass = hashing(body.newPass);
+  try {
+    await User.findByIdAndUpdate(req.user._id, {
+      password: nPass,
+    });
+    res.send('Password changed seccessfully');
+  } catch (err) {
+    res.status(400).send('Could not change password');
+  }
+});
 export default router;

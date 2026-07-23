@@ -41,7 +41,7 @@ const ChangePassword = () => {
               You need to access your current password
             </p>
           </div>
-          {/*Form*/}
+
           <div className="px-8 pb-10 -mt-8 ">
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">

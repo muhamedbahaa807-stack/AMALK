@@ -117,10 +117,8 @@ const MyAppointmentsPage = () => {
       </div>
       {showModel && (
         <>
-          {/* Overlay */}
           <div className="fixed inset-0 bg-black/40 z-40"></div>
 
-          {/* Modal */}
           <div className="fixed inset-0 flex items-center justify-center z-50">
             <div className="bg-white rounded-3xl shadow-2xl w-[420px] p-8">
               <h2 className="text-3xl font-bold text-[#012553]">

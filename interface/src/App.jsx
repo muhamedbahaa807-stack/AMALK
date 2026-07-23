@@ -13,6 +13,9 @@ import ChangePassword from './pages/ChangePassword.jsx';
 import UpdateProfile from './pages/UpdateProfile.jsx';
 import New_appointmentPage from './pages/New_appointmentPage.jsx';
 import NotFoundPage from './pages/notFoundPage.jsx';
+import DepartmentsPage from './pages/DepartmentsPage.jsx';
+import OneDepartmentPage from './pages/OneDepartmentPage.jsx';
+import MyAppointmentsPage from './pages/Appointments.jsx';
 const App = () => {
   const router = createBrowserRouter(
     createRoutesFromElements(
@@ -24,6 +27,9 @@ const App = () => {
         <Route path="/change_password" element={<ChangePassword />} />
         <Route path="/update_profile" element={<UpdateProfile />} />
         <Route path="/new_appointment" element={<New_appointmentPage />} />
+        <Route path="/departments" element={<DepartmentsPage />} />
+        <Route path="/departments/:id" element={<OneDepartmentPage />} />
+        <Route path="/appointment/my" element={<MyAppointmentsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>,
     ),

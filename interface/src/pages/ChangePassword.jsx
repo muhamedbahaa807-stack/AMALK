@@ -29,7 +29,7 @@ const ChangePassword = () => {
     setLoading(false);
   };
   return (
-    <div className="bg-[#012553]">
+    <div className=" bg-gradient-to-br from-[#012553] via-[#0A3D78] to-[#14B8A6]">
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-[440px] bg-white shadow-2xl border border-gray-100 overflow-hidden rounded-2xl">
           {/* Header */}

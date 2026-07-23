@@ -7,7 +7,6 @@ const Nav = () => {
   if (loading) return null;
   return (
     <section className="sticky top-0 z-[100] flex h-[64px] w-full items-center justify-between bg-white/90 backdrop-blur-md px-6 md:px-14 shadow-sm border-b border-gray-100">
-      {/* Logo */}
       <Link
         to="/"
         className="flex items-center gap-2 text-[20px] font-bold text-[#012553] tracking-[0.5px] hover:opacity-80 transition-opacity duration-300"
@@ -16,7 +15,6 @@ const Nav = () => {
         <span>AMALK</span>
       </Link>
 
-      {/* Actions */}
       <div className="flex items-center gap-3">
         {user ? (
           <>

@@ -21,7 +21,7 @@ const ProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#012553] flex items-center justify-center">
+      <div className="min-h-screen  bg-gradient-to-br from-[#012553] via-[#0A3D78] to-[#14B8A6] flex items-center justify-center">
         <h1 className="text-white text-2xl font-bold">Loading...</h1>
       </div>
     );
@@ -29,14 +29,14 @@ const ProfilePage = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#012553] flex items-center justify-center">
+      <div className="min-h-screen  bg-gradient-to-br from-[#012553] via-[#0A3D78] to-[#14B8A6] flex items-center justify-center">
         <h1 className="text-white text-2xl font-bold">Please Login First</h1>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#012553] flex items-center justify-center px-6 py-12">
+    <div className="min-h-screen  bg-gradient-to-br from-[#012553] via-[#0A3D78] to-[#14B8A6] flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* User Info */}
         <div className="lg:col-span-2 bg-white rounded-3xl shadow-2xl p-8">
@@ -72,7 +72,6 @@ const ProfilePage = () => {
           </Link>
         </div>
 
-        {/* Quick Actions */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 flex flex-col">
           <h2 className="text-2xl font-bold text-[#012553] mb-8">
             Quick Actions
@@ -107,7 +106,6 @@ const ProfilePage = () => {
         </div>
       </div>
 
-      {/* Logout Modal */}
       {showModal && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"

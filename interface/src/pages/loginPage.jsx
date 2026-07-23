@@ -33,10 +33,9 @@ const loginPage = () => {
     }
   };
   return (
-    <div className="bg-[#012553]">
+    <div className=" bg-gradient-to-br from-[#012553] via-[#0A3D78] to-[#14B8A6]">
       <div className="min-h-screen flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-[440px] bg-white shadow-2xl border border-gray-100 overflow-hidden rounded-2xl">
-          {/* Header */}
           <div className="text-center pt-10 pb-16 px-8">
             <h1 className="text-bold font-black text-2xl">
               Log In To Your Account
@@ -45,7 +44,7 @@ const loginPage = () => {
               You need to access your account
             </p>
           </div>
-          {/*Form*/}
+
           <div className="px-8 pb-10 -mt-8 ">
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">

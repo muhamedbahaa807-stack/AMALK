@@ -38,7 +38,7 @@ const UpdateProfile = () => {
   };
 
   return (
-    <div className="bg-[#012553]">
+    <div className=" bg-gradient-to-br from-[#012553] via-[#0A3D78] to-[#14B8A6]">
       <div className="min-h-screen flex justify-center items-center px-4 py-12">
         <div className="w-full max-w-[440px] rounded-2xl bg-white shadow-2xl overflow-hidden border border-gray-100">
           {/* Header */}
@@ -51,7 +51,6 @@ const UpdateProfile = () => {
             </p>
           </div>
 
-          {/* Form */}
           <div className="px-8 pb-10 -mt-8">
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <form onSubmit={handleSubmit} className="flex flex-col gap-4">

@@ -6,7 +6,7 @@ import {
 } from './tokenService';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3030',
+  baseURL: 'https://amalk-api.onrender.com',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

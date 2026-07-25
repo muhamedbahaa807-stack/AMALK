@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { updateSchema } from '../utils/validation.js';
 import User from '../../models/User.js';
 import { validationResult, checkSchema, matchedData } from 'express-validator';
-import { verfiyAccessToken } from '../utils/middlewares.js';
+import { isAdmin, verfiyAccessToken } from '../utils/middlewares.js';
 import jwt from 'jsonwebtoken';
 import { generateAccessToken } from '../utils/jwt.js';
 import { comparePass } from '../helpers/hashPass.js';
@@ -10,7 +10,10 @@ const router = Router();
 router.get('/users/profile', verfiyAccessToken, (req, res) => {
   res.status(200).json(req.user);
 });
-
+router.get('/users', verfiyAccessToken, isAdmin, async (req, res) => {
+  const users = await User.find();
+  res.status(200).send(users);
+});
 router.post('/users/refresh', async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;

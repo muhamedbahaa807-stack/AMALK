@@ -24,8 +24,9 @@ const loginPage = () => {
       const { data } = await api.post('/signIn', formData);
 
       login(data.userData, data.accessToken);
-      console.log(data.userData);
-      navigate('/profile');
+
+      if (data.userData.role === 'admin') navigate('/admin');
+      else navigate('/profile');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to sign in.');
 

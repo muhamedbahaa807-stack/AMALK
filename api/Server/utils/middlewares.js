@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../../models/User.js';
+import multer from 'multer';
+
 export const verfiyAccessToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
@@ -36,3 +38,7 @@ export const isAdmin = (req, res, next) => {
   }
   return res.status(403).json({ error: 'Access denied. Admins only.' });
 };
+
+const storage = multer.diskStorage({});
+
+export const upload = multer({ storage });

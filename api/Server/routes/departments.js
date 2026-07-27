@@ -7,6 +7,8 @@ import {
 import Department from '../../models/Department.js';
 import Appointment from '../../models/Appointment.js';
 import { validationResult, checkSchema, matchedData } from 'express-validator';
+import { upload } from '../utils/middlewares.js';
+import cloudinary from '../config/cloudinary.js';
 
 const router = Router();
 
@@ -33,16 +35,18 @@ router.post(
   '/departments',
   verfiyAccessToken,
   isAdmin,
-  checkSchema(departmentValidayionSchema),
+  upload.single('image'),
+
   async (req, res) => {
-    const result = validationResult(req);
-    if (!result.isEmpty()) return res.send({ error: result.array() });
+    const { body } = req;
+    const result = await cloudinary.uploader.upload(req.file.path);
+    body.image = result.secure_url;
     try {
-      const data = matchedData(req);
-      const newDepartment = await Department.create(data);
-      return res.status(201).send(newDepartment);
+      const newDepartment = await Department.create(body);
+      console.log(newDepartment);
+      return res.status(201).json(newDepartment);
     } catch (err) {
-      return res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json(err);
     }
   },
 );

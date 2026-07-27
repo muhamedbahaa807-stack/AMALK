@@ -6,6 +6,7 @@ import { isAdmin, verfiyAccessToken } from '../utils/middlewares.js';
 import jwt from 'jsonwebtoken';
 import { generateAccessToken } from '../utils/jwt.js';
 import { comparePass } from '../helpers/hashPass.js';
+
 const router = Router();
 router.get('/users/profile', verfiyAccessToken, (req, res) => {
   res.status(200).json(req.user);

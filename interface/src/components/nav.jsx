@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FaRegHospital, FaCalendarCheck, FaUserCircle } from 'react-icons/fa';
+import { RiAdminFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext.jsx';
 const Nav = () => {
@@ -18,12 +19,21 @@ const Nav = () => {
       <div className="flex items-center gap-3">
         {user ? (
           <>
-            <Link to="/new_appointment">
-              <button className="cursor-pointer flex items-center gap-2 h-[38px] rounded-lg border border-[#012553] bg-[#012553] px-4 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-[#01193d] active:scale-95">
-                <FaCalendarCheck className="text-[14px]" />
-                Book
-              </button>
-            </Link>
+            {user.role === 'admin' ? (
+              <Link to="/admin">
+                <button className="cursor-pointer flex items-center gap-2 h-[38px] rounded-lg border border-[#012553] bg-[#012553] px-4 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-[#01193d] active:scale-95">
+                  <RiAdminFill className="text-[14px]" />
+                  Control
+                </button>
+              </Link>
+            ) : (
+              <Link to="/new_appointment">
+                <button className="cursor-pointer flex items-center gap-2 h-[38px] rounded-lg border border-[#012553] bg-[#012553] px-4 text-[15px] font-semibold text-white transition-all duration-300 hover:bg-[#01193d] active:scale-95">
+                  <FaCalendarCheck className="text-[14px]" />
+                  Book
+                </button>
+              </Link>
+            )}
             <Link to="/profile">
               <button className="cursor-pointer flex items-center gap-2 h-[38px] rounded-lg border border-[#012553] bg-white px-4 text-[15px] font-semibold text-[#012553] transition-all duration-300 hover:bg-[#012553] hover:text-white active:scale-95">
                 <FaUserCircle className="text-[16px]" />

@@ -17,6 +17,7 @@ import DepartmentsPage from './pages/DepartmentsPage.jsx';
 import OneDepartmentPage from './pages/OneDepartmentPage.jsx';
 import MyAppointmentsPage from './pages/Appointments.jsx';
 import AdminControlPage from './pages/AdminControlPage.jsx';
+import Edit_Department from './pages/Edit_Department.jsx';
 
 const App = () => {
   const router = createBrowserRouter(
@@ -33,6 +34,7 @@ const App = () => {
         <Route path="/departments/:id" element={<OneDepartmentPage />} />
         <Route path="/appointment/my" element={<MyAppointmentsPage />} />
         <Route path="/admin" element={<AdminControlPage />} />
+        <Route path="/edit_department/:id" element={<Edit_Department />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>,
     ),

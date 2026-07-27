@@ -168,13 +168,13 @@ router.put(
   },
 );
 
-router.get('/', verfiyAccessToken, isAdmin, async (req, res) => {
+router.get('/appointments', verfiyAccessToken, isAdmin, async (req, res) => {
   try {
     const allAppointments = await Appointment.find()
       .populate('userId', 'name email')
       .populate('departmentId', 'name doctorName')
       .sort({ createdAt: -1 });
-
+    console.log(allAppointments);
     return res.status(200).json(allAppointments);
   } catch (err) {
     console.error(err);
@@ -182,30 +182,64 @@ router.get('/', verfiyAccessToken, isAdmin, async (req, res) => {
   }
 });
 
-router.put('/:id/status', verfiyAccessToken, isAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
+router.put(
+  '/appointments/:id/status',
+  verfiyAccessToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
 
-    if (!status || !['confirmed', 'cancelled', 'pending'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid or missing status' });
+      if (!status || !['confirmed', 'cancelled', 'pending'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid or missing status' });
+      }
+
+      const appointment = await Appointment.findById(id);
+      if (!appointment) {
+        return res.status(404).json({ error: 'Appointment not found' });
+      }
+
+      appointment.status = status;
+      await appointment.save();
+
+      return res.status(200).json({
+        msg: `Appointment status updated to ${status} successfully`,
+        appointment,
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Internal Server Error' });
     }
+  },
+);
+router.delete(
+  '/appointments/:id',
+  verfiyAccessToken,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
 
-    const appointment = await Appointment.findById(id);
-    if (!appointment) {
-      return res.status(404).json({ error: 'Appointment not found' });
+      const appointment = await Appointment.findById(id);
+
+      if (!appointment) {
+        return res.status(404).json({
+          error: 'Appointment not found',
+        });
+      }
+
+      await appointment.deleteOne();
+
+      return res.status(200).json({
+        msg: 'Appointment deleted successfully',
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({
+        error: 'Internal Server Error',
+      });
     }
-
-    appointment.status = status;
-    await appointment.save();
-
-    return res.status(200).json({
-      msg: `Appointment status updated to ${status} successfully`,
-      appointment,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+  },
+);
 export default router;

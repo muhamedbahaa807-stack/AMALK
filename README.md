@@ -175,9 +175,9 @@ npm run dev
 Faculty of Computers and Artificial Intelligence
 Cairo University
 
-GitHub: [https://github.com/your-username](https://github.com/muhamedbahaa807-stack)
+GitHub: [Muhamed Bahaa](https://github.com/muhamedbahaa807-stack)
 
-LinkedIn:[ https://linkedin.com/in/your-profile](https://www.linkedin.com/in/muhamed-bahaa-ab7b6b370/)
+LinkedIn: [Muhamed Bahaa](https://www.linkedin.com/in/muhamed-bahaa-ab7b6b370/)
 
 ---
 
@@ -195,9 +195,27 @@ This project is created for educational and portfolio purposes.
 - Cloudinary
 - Vercel
 - Render
+---
+# 📸 Screenshots
 
+## Home Page
 
+![Home](screenshots/home.png)
 
+## Departments
+
+![Departments](screenshots/departments.png)
+
+## Booking
+
+![Booking](screenshots/Booking.png)
+
+## Admin Dashboard
+
+![Dashboard](screenshots/admin_dashboard.png)
+
+## Log In 
+![LogIN](creenshots/logIN.png)
 
 
 

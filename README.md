@@ -216,7 +216,7 @@ This project is created for educational and portfolio purposes.
 ![Dashboard](screenshots/admin_dashboard.png)
 
 ## Log In 
-![LogIN](creenshots/logIN.png)
+![LogIN](screenshots/logIN.png)
 
 
 

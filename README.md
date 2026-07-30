@@ -4,6 +4,7 @@
 ![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?logo=mongodb&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT-black)
 ![License](https://img.shields.io/badge/License-Portfolio-blue)
+
 A full-stack hospital appointment booking system built with the MERN Stack. The application allows patients to register, book appointments with different departments, manage their profile, and track their bookings, while administrators can manage departments and appointments through a secure dashboard.
 
 ## 🚀 Live Demo

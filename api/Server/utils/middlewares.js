@@ -6,12 +6,12 @@ export const verfiyAccessToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({
-      error: 'Unauthorized',
+      message: 'Unauthorized',
     });
   }
   if (!authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
-      error: 'Invalid Token',
+      message: 'Invalid Token',
     });
   }
   const token = authHeader.split(' ')[1];
@@ -20,14 +20,14 @@ export const verfiyAccessToken = async (req, res, next) => {
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {
       return res.status(401).json({
-        error: 'User not found',
+        message: 'Unauthorized',
       });
     }
     req.user = user;
     next();
   } catch (err) {
     return res.status(401).json({
-      error: 'Invalid or expired token',
+      message: 'Invalid or expired token',
     });
   }
 };

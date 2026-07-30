@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 const AdminComponents = ({ clicked }) => {
+  const [error, setError] = useState('');
   const [Loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -44,7 +45,11 @@ const AdminComponents = ({ clicked }) => {
       await api.post('/departments', formData);
       navigate('/departments');
     } catch (err) {
-      console.log(err);
+      if (err.response.data.error) {
+        setError(err.response.data.error[0].msg);
+      } else {
+        setError(err.response.data.message);
+      }
     }
     setLoading(false);
   };
@@ -150,7 +155,11 @@ const AdminComponents = ({ clicked }) => {
             <h2 className="text-3xl font-bold text-[#012553] text-center">
               Add Department
             </h2>
-
+            {error && (
+              <div className="bg-red-50 text-red-600 text-sm rounded-lg px-4 py-2 text-center border border-red-100">
+                {error}
+              </div>
+            )}
             <div>
               <label className="block mb-2 font-semibold">
                 Department Name

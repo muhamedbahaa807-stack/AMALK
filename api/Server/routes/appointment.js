@@ -1,68 +1,119 @@
 import { Router } from 'express';
 import { verfiyAccessToken, isAdmin } from '../utils/middlewares.js';
 import Appointment from '../../models/Appointment.js';
+import {
+  appointmentSchema,
+  appointmentStatusSchema,
+} from '../utils/validation.js';
+import { checkSchema, validationResult } from 'express-validator';
 const router = Router();
 
-router.post('/appointment', verfiyAccessToken, async (req, res) => {
-  try {
-    const { departmentId, date, Slot } = req.body;
-    const userId = req.user._id;
-    if (!departmentId || !date || !Slot) {
-      return res
-        .status(400)
-        .json({ error: 'All fields (departmentId, date, Slot) are required' });
-    }
+router.post(
+  '/appointment',
+  verfiyAccessToken,
+  checkSchema(appointmentSchema),
+  async (req, res) => {
+    const result = validationResult(req);
 
-    if (Slot < 1 || Slot > 6) {
-      return res
-        .status(400)
-        .json({ error: 'Slot must be a number between 1 and 6' });
-    }
-
-    const bookingDate = new Date(date);
-    const dayOfWeek = bookingDate.getDay();
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return res
-        .status(400)
-        .json({ error: 'Cannot book on weekends (Saturday and Sunday)' });
-    }
-
-    const startOfDay = new Date(date);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(date);
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const isSlotTaken = await Appointment.findOne({
-      departmentId,
-      date: { $gte: startOfDay, $lte: endOfDay },
-      Slot,
-      status: { $ne: 'cancelled' },
-    });
-
-    if (isSlotTaken) {
+    if (!result.isEmpty()) {
       return res.status(400).json({
-        error: 'This time slot is already booked for this department',
+        message: 'Validation failed',
+        errors: result.array(),
       });
     }
 
-    const newAppointment = new Appointment({
-      userId,
-      departmentId,
-      date: bookingDate,
-      Slot,
-      status: 'pending', //
-    });
+    try {
+      const { departmentId, date, Slot } = req.body;
+      const userId = req.user._id;
 
-    await newAppointment.save();
-    return res.status(201).json({
-      msg: 'Appointment booked successfully',
-      appointment: newAppointment,
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
+      const department = await Department.findById(departmentId);
+
+      if (!department) {
+        return res.status(404).json({
+          message: 'Department not found',
+        });
+      }
+
+      const bookingDate = new Date(date);
+
+      const dayOfWeek = bookingDate.getDay();
+
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        return res.status(400).json({
+          message: 'Cannot book on weekends (Saturday and Sunday)',
+        });
+      }
+
+      const startOfDay = new Date(bookingDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(bookingDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const userAppointment = await Appointment.findOne({
+        userId,
+        departmentId,
+        date: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+        status: {
+          $ne: 'cancelled',
+        },
+      });
+
+      if (userAppointment) {
+        return res.status(400).json({
+          message:
+            'You already have an appointment in this department on this date',
+        });
+      }
+
+      const isSlotTaken = await Appointment.findOne({
+        departmentId,
+        date: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+        Slot,
+        status: {
+          $ne: 'cancelled',
+        },
+      });
+
+      if (isSlotTaken) {
+        return res.status(400).json({
+          message: 'This time slot is already booked for this department',
+        });
+      }
+
+      const appointment = await Appointment.create({
+        userId,
+        departmentId,
+        date: bookingDate,
+        Slot,
+        status: 'pending',
+      });
+
+      return res.status(201).json({
+        message: 'Appointment booked successfully',
+        appointment,
+      });
+    } catch (err) {
+      console.error(err);
+
+      if (err.name === 'CastError') {
+        return res.status(400).json({
+          message: 'Invalid Department ID format',
+        });
+      }
+
+      return res.status(500).json({
+        message: 'Internal Server Error',
+      });
+    }
+  },
+);
 
 router.get('/appointment/my', verfiyAccessToken, async (req, res) => {
   try {
@@ -70,115 +121,80 @@ router.get('/appointment/my', verfiyAccessToken, async (req, res) => {
 
     const myAppointments = await Appointment.find({ userId })
       .populate('departmentId', 'name doctorName')
-      .sort({ date: 1 });
+      .sort({ date: 1 })
+      .lean();
 
     return res.status(200).json(myAppointments);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+
+    return res.status(500).json({
+      message: 'Internal Server Error',
+    });
   }
 });
 router.put('/appointment/:id/cancel', verfiyAccessToken, async (req, res) => {
   try {
     const { id } = req.params;
+
     const appointment = await Appointment.findById(id);
 
     if (!appointment) {
-      return res.status(404).json({ error: 'Appointment not found' });
+      return res.status(404).json({
+        message: 'Appointment not found',
+      });
     }
 
     if (
       appointment.userId.toString() !== req.user._id.toString() &&
-      !req.user.isAdmin
+      req.user.role !== 'admin'
     ) {
-      return res
-        .status(403)
-        .json({ error: 'Unauthorized to cancel this appointment' });
+      return res.status(403).json({
+        message: 'Unauthorized to cancel this appointment',
+      });
+    }
+
+    if (appointment.status === 'cancelled') {
+      return res.status(400).json({
+        message: 'Appointment is already cancelled',
+      });
     }
 
     appointment.status = 'cancelled';
     await appointment.save();
 
-    return res
-      .status(200)
-      .json({ msg: 'Appointment cancelled successfully', appointment });
+    return res.status(200).json({
+      message: 'Appointment cancelled successfully',
+      appointment,
+    });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+
+    if (err.name === 'CastError') {
+      return res.status(400).json({
+        message: 'Invalid Appointment ID format',
+      });
+    }
+
+    return res.status(500).json({
+      message: 'Internal Server Error',
+    });
   }
 });
-
-router.put(
-  '/appointment/:id/request-edit',
-  verfiyAccessToken,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { newDate, newSlot } = req.body;
-
-      if (!newDate || !newSlot) {
-        return res
-          .status(400)
-          .json({ error: 'New Date and New Slot are required' });
-      }
-
-      const appointment = await Appointment.findById(id);
-      if (!appointment) {
-        return res.status(404).json({ error: 'Appointment not found' });
-      }
-
-      if (appointment.userId.toString() !== req.user._id.toString()) {
-        return res
-          .status(403)
-          .json({ error: 'Unauthorized to edit this appointment' });
-      }
-
-      const startOfDay = new Date(newDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(newDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      const isSlotTaken = await Appointment.findOne({
-        _id: { $ne: id },
-        departmentId: appointment.departmentId,
-        date: { $gte: startOfDay, $lte: endOfDay },
-        Slot: newSlot,
-        status: { $ne: 'cancelled' },
-      });
-
-      if (isSlotTaken) {
-        return res
-          .status(400)
-          .json({ error: 'The requested new slot is already taken' });
-      }
-
-      appointment.date = new Date(newDate);
-      appointment.Slot = newSlot;
-      appointment.status = 'pending';
-
-      await appointment.save();
-      return res.status(200).json({
-        msg: 'Edit requested successfully. Awaiting admin confirmation.',
-        appointment,
-      });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  },
-);
 
 router.get('/appointments', verfiyAccessToken, isAdmin, async (req, res) => {
   try {
     const allAppointments = await Appointment.find()
       .populate('userId', 'name email')
       .populate('departmentId', 'name doctorName')
-      .sort({ createdAt: -1 });
-    console.log(allAppointments);
+      .sort({ createdAt: -1 })
+      .lean();
+
     return res.status(200).json(allAppointments);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({
+      message: 'Internal Server Error',
+    });
   }
 });
 
@@ -186,30 +202,53 @@ router.put(
   '/appointments/:id/status',
   verfiyAccessToken,
   isAdmin,
+  checkSchema(appointmentStatusSchema),
   async (req, res) => {
+    const result = validationResult(req);
+
+    if (!result.isEmpty()) {
+      return res.status(400).json({
+        error: result.array(),
+      });
+    }
+
     try {
       const { id } = req.params;
       const { status } = req.body;
 
-      if (!status || !['confirmed', 'cancelled', 'pending'].includes(status)) {
-        return res.status(400).json({ error: 'Invalid or missing status' });
+      const appointment = await Appointment.findById(id);
+
+      if (!appointment) {
+        return res.status(404).json({
+          message: 'Appointment not found',
+        });
       }
 
-      const appointment = await Appointment.findById(id);
-      if (!appointment) {
-        return res.status(404).json({ error: 'Appointment not found' });
+      if (appointment.status === status) {
+        return res.status(400).json({
+          message: `Appointment is already ${status}`,
+        });
       }
 
       appointment.status = status;
       await appointment.save();
 
       return res.status(200).json({
-        msg: `Appointment status updated to ${status} successfully`,
+        message: `Appointment status updated to ${status} successfully`,
         appointment,
       });
     } catch (err) {
       console.error(err);
-      return res.status(500).json({ error: 'Internal Server Error' });
+
+      if (err.name === 'CastError') {
+        return res.status(400).json({
+          message: 'Invalid Appointment ID format',
+        });
+      }
+
+      return res.status(500).json({
+        message: 'Internal Server Error',
+      });
     }
   },
 );
@@ -225,19 +264,26 @@ router.delete(
 
       if (!appointment) {
         return res.status(404).json({
-          error: 'Appointment not found',
+          message: 'Appointment not found',
         });
       }
 
       await appointment.deleteOne();
 
       return res.status(200).json({
-        msg: 'Appointment deleted successfully',
+        message: 'Appointment deleted successfully',
       });
     } catch (err) {
       console.error(err);
+
+      if (err.name === 'CastError') {
+        return res.status(400).json({
+          message: 'Invalid Appointment ID format',
+        });
+      }
+
       return res.status(500).json({
-        error: 'Internal Server Error',
+        message: 'Internal Server Error',
       });
     }
   },

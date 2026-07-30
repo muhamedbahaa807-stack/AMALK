@@ -1,11 +1,11 @@
 import { Router } from 'express';
-import { updateSchema } from '../utils/validation.js';
+import { updateSchema, changePasswordSchema } from '../utils/validation.js';
 import User from '../../models/User.js';
 import { validationResult, checkSchema, matchedData } from 'express-validator';
 import { isAdmin, verfiyAccessToken } from '../utils/middlewares.js';
 import jwt from 'jsonwebtoken';
 import { generateAccessToken } from '../utils/jwt.js';
-import { comparePass } from '../helpers/hashPass.js';
+import { hashing, comparePass } from '../helpers/hashPass.js';
 
 const router = Router();
 router.get('/users/profile', verfiyAccessToken, (req, res) => {
@@ -21,7 +21,7 @@ router.post('/users/refresh', async (req, res) => {
 
     if (!refreshToken) {
       return res.status(401).json({
-        error: 'Something wrong',
+        message: 'Refresh token is missing',
       });
     }
 
@@ -31,7 +31,7 @@ router.post('/users/refresh', async (req, res) => {
 
     if (!user) {
       return res.status(401).json({
-        error: 'User not found',
+        message: 'Unauthorized',
       });
     }
 
@@ -42,46 +42,96 @@ router.post('/users/refresh', async (req, res) => {
     });
   } catch (err) {
     return res.status(401).json({
-      error: 'Invalid or expired refresh token',
+      message: 'Invalid or expired refresh token',
     });
   }
 });
 
-router.put('/users/updateprofile', verfiyAccessToken, async (req, res) => {
-  const { body } = req;
-  try {
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      { $set: body },
-      { new: true, runValidators: true },
-    ).select('-password');
-    req.user = updatedUser;
+router.put(
+  '/users/updateprofile',
+  verfiyAccessToken,
+  checkSchema(updateSchema),
+  async (req, res) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      console.log(result.array());
+      return res.status(400).json({
+        error: result.array(),
+      });
+    }
+    try {
+      const { name, email, phone } = req.body;
 
-    return res.status(200).json({ user: updatedUser });
-  } catch (err) {
-    return res.status(500).send('Internal Server Error');
-  }
-});
-router.post('/users/Change_Pass', verfiyAccessToken, async (req, res) => {
-  const { body } = req;
-  const user = await User.findById(req.user.id);
-  const ifPassExist = comparePass(body.password, user.password);
-  if (!ifPassExist) {
-    return res.status(404).send({
-      error: 'It is not the current password',
-    });
-  }
-  if (body.password === body.newPass) {
-    return res.status(400).send({ error: 'New password must be different' });
-  }
-  const nPass = hashing(body.newPass);
-  try {
-    await User.findByIdAndUpdate(req.user._id, {
-      password: nPass,
-    });
-    res.send('Password changed seccessfully');
-  } catch (err) {
-    res.status(400).send('Could not change password');
-  }
-});
+      const updatedUser = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+          name,
+          email,
+          phone,
+        },
+        {
+          new: true,
+          runValidators: true,
+        },
+      ).select('-password');
+
+      return res.status(200).json({
+        message: 'Profile updated successfully',
+        user: updatedUser,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        message: 'Internal Server Error',
+      });
+    }
+  },
+);
+router.put(
+  '/users/change-password',
+  verfiyAccessToken,
+  checkSchema(changePasswordSchema),
+  async (req, res) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      console.log(result.array());
+      return res.status(400).json({
+        error: result.array(),
+      });
+    }
+    try {
+      const { currentPassword, newPassword } = req.body;
+
+      const user = await User.findById(req.user._id);
+
+      const isMatch = comparePass(currentPassword, user.password);
+
+      if (!isMatch) {
+        return res.status(400).json({
+          message: 'Current password is incorrect',
+        });
+      }
+
+      if (currentPassword === newPassword) {
+        return res.status(400).json({
+          message: 'New password must be different',
+        });
+      }
+
+      const hashedPassword = hashing(newPassword);
+
+      await User.findByIdAndUpdate(req.user._id, {
+        password: hashedPassword,
+      });
+
+      return res.status(200).json({
+        message: 'Password changed successfully',
+      });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({
+        message: 'Internal Server Error',
+      });
+    }
+  },
+);
 export default router;

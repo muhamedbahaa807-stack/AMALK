@@ -23,11 +23,17 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      await api.post('/signUP', formData);
+      const { data } = await api.post('/signUP', formData);
+      alert(data.message);
       navigate('/login');
-    } catch (error) {
-      setError('Failed to signup. Please try again.');
+    } catch (err) {
+      if (err.response.data.error) {
+        setError(err.response.data.error[0].msg);
+      } else {
+        setError(err.response.data.message);
+      }
     }
+    setLoading(false);
   };
 
   return (

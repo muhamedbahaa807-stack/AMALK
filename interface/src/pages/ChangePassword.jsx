@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaLock } from 'react-icons/fa';
 import api from '../api/axios';
-
+import { useNavigate } from 'react-router-dom';
 const ChangePassword = () => {
   const [formData, setFormData] = useState({
-    password: '',
-    newPass: '',
+    currentPassword: '',
+    newPassword: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
   const handleCahnge = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -19,13 +20,16 @@ const ChangePassword = () => {
     setLoading(true);
 
     try {
-      await api.post('/users/Change_Pass', formData);
+      await api.put('/users/change-password', formData);
+      navigate('/profile');
     } catch (err) {
-      setError(
-        err.response?.data?.error || 'Failed to Change Please try again.',
-      );
-      console.log(err);
+      if (err.response.data.error) {
+        setError(err.response.data.error[0].msg);
+      } else {
+        setError(err.response.data.message);
+      }
     }
+
     setLoading(false);
   };
   return (
@@ -55,8 +59,8 @@ const ChangePassword = () => {
                   <input
                     type="password"
                     placeholder="Enter current password"
-                    name="password"
-                    value={formData.password}
+                    name="currentPassword"
+                    value={formData.currentPassword}
                     required
                     onChange={handleCahnge}
                     className="w-full pl-11 pr-4 rounded-lg py-3 border border-gray-200 focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/20 outline-none transition-all text-[#012553] placeholder:text-gray-400 text-sm"
@@ -67,8 +71,8 @@ const ChangePassword = () => {
                   <input
                     type="password"
                     placeholder="Enter new Password"
-                    name="newPass"
-                    value={formData.newPass}
+                    name="newPassword"
+                    value={formData.newPassword}
                     required
                     onChange={handleCahnge}
                     className="w-full pl-11 pr-4 rounded-lg py-3 border border-gray-200 focus:border-[#14B8A6] focus:ring-2 focus:ring-[#14B8A6]/20 outline-none transition-all text-[#012553] placeholder:text-gray-400 text-sm"

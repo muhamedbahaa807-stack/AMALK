@@ -13,7 +13,10 @@ const Departments = () => {
         const { data } = await api.get('/departments');
         setdepartments(data);
       } catch (error) {
-        console.error('failed to fetch departments:', error);
+        console.error(
+          'failed to fetch departments:',
+          error.response?.data?.message,
+        );
       }
     };
 

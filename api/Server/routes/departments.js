@@ -23,11 +23,10 @@ const ALL_SLOTS = [
 
 router.get('/departments', async (req, res) => {
   try {
-    const departments = await Department.find();
+    const departments = await Department.find().lean();
     return res.status(200).json(departments);
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -36,17 +35,36 @@ router.post(
   verfiyAccessToken,
   isAdmin,
   upload.single('image'),
+  checkSchema(departmentValidayionSchema),
 
   async (req, res) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      console.log(result.array());
+      return res.status(400).json({
+        error: result.array(),
+      });
+    }
     const { body } = req;
-    const result = await cloudinary.uploader.upload(req.file.path);
-    body.image = result.secure_url;
+    if (!req.file) {
+      return res.status(400).json({
+        message: 'Image is required',
+      });
+    }
+
     try {
+      const result = await cloudinary.uploader.upload(req.file.path);
+      body.image = result.secure_url;
       const newDepartment = await Department.create(body);
       console.log(newDepartment);
-      return res.status(201).json(newDepartment);
+      return res.status(201).json({
+        message: 'Department created successfully',
+        department: newDepartment,
+      });
     } catch (err) {
-      return res.status(500).json(err);
+      return res.status(500).json({
+        message: 'Internal Server Error',
+      });
     }
   },
 );
@@ -54,17 +72,28 @@ router.post(
 router.get('/departments/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const department = await Department.findById(id);
+
+    const department = await Department.findById(id).lean();
+
     if (!department) {
-      return res.status(404).json({ error: 'Department not found' });
+      return res.status(404).json({
+        message: 'Department not found',
+      });
     }
+
     return res.status(200).json(department);
   } catch (err) {
     console.error(err);
+
     if (err.name === 'CastError') {
-      return res.status(400).json({ error: 'Invalid Department ID format' });
+      return res.status(400).json({
+        message: 'Invalid Department ID format',
+      });
     }
-    return res.status(500).json({ error: 'Internal Server Error' });
+
+    return res.status(500).json({
+      message: 'Internal Server Error',
+    });
   }
 });
 
@@ -75,37 +104,55 @@ router.put(
   checkSchema(departmentUpdateSchema),
   async (req, res) => {
     const result = validationResult(req);
+
     if (!result.isEmpty()) {
-      return res.status(400).json({ error: result.array() });
+      return res.status(400).json({
+        error: result.array(),
+      });
     }
+
     try {
       const { id } = req.params;
+
       const dataToUpdate = matchedData(req);
+
       if (Object.keys(dataToUpdate).length === 0) {
-        return res.status(400).json({ error: 'No data provided to update' });
+        return res.status(400).json({
+          message: 'No data provided to update',
+        });
       }
+
       const updatedDepartment = await Department.findByIdAndUpdate(
         id,
         { $set: dataToUpdate },
-        { new: true, runValidators: true },
+        {
+          new: true,
+          runValidators: true,
+        },
       );
 
       if (!updatedDepartment) {
-        return res.status(404).json({ error: 'Department not found' });
+        return res.status(404).json({
+          message: 'Department not found',
+        });
       }
 
       return res.status(200).json({
-        msg: 'Department updated successfully',
+        message: 'Department updated successfully',
         department: updatedDepartment,
       });
     } catch (err) {
       console.error(err);
 
       if (err.name === 'CastError') {
-        return res.status(400).json({ error: 'Invalid Department ID format' });
+        return res.status(400).json({
+          message: 'Invalid Department ID format',
+        });
       }
 
-      return res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({
+        message: 'Internal Server Error',
+      });
     }
   },
 );
@@ -116,22 +163,29 @@ router.get('/departments/:id/available-slots', async (req, res) => {
     const { date } = req.query;
 
     if (!date) {
-      return res
-        .status(400)
-        .json({ error: 'Date query parameter (?date=YYYY-MM-DD) is required' });
+      return res.status(400).json({
+        message: 'Date query parameter (?date=YYYY-MM-DD) is required',
+      });
     }
 
-    const department = await Department.findById(id);
+    const department = await Department.findById(id).lean();
     if (!department) {
-      return res.status(404).json({ error: 'Department not found' });
+      return res.status(404).json({ message: 'Department not found' });
     }
 
     const parsedDate = new Date(date);
+
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({
+        message: 'Invalid date format',
+      });
+    }
     const dayOfWeek = parsedDate.getDay();
 
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       return res.status(200).json({
-        msg: 'Weekend (Saturday and Sunday) are days off. No slots available.',
+        message:
+          'Weekend (Saturday and Sunday) are days off. No slots available.',
         availableSlots: [],
       });
     }
@@ -146,7 +200,7 @@ router.get('/departments/:id/available-slots', async (req, res) => {
       departmentId: id,
       date: { $gte: startOfDay, $lte: endOfDay },
       status: { $ne: 'cancelled' },
-    });
+    }).lean();
 
     const bookedSlotIds = existingAppointments.map((app) => app.Slot);
 
@@ -162,9 +216,9 @@ router.get('/departments/:id/available-slots', async (req, res) => {
   } catch (err) {
     console.error(err);
     if (err.name === 'CastError') {
-      return res.status(400).json({ error: 'Invalid Department ID format' });
+      return res.status(400).json({ message: 'Invalid Department ID format' });
     }
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -179,23 +233,31 @@ router.delete(
       const deletedDepartment = await Department.findByIdAndDelete(id);
 
       if (!deletedDepartment) {
-        return res.status(404).json({ error: 'Department not found' });
+        return res.status(404).json({
+          message: 'Department not found',
+        });
       }
 
-      await Appointment.deleteMany({ departmentId: id });
+      await Appointment.deleteMany({
+        departmentId: id,
+      });
 
       return res.status(200).json({
-        msg: 'Department and its related appointments deleted successfully',
+        message: 'Department and its related appointments deleted successfully',
         department: deletedDepartment,
       });
     } catch (err) {
       console.error(err);
 
       if (err.name === 'CastError') {
-        return res.status(400).json({ error: 'Invalid Department ID format' });
+        return res.status(400).json({
+          message: 'Invalid Department ID format',
+        });
       }
 
-      return res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({
+        message: 'Internal Server Error',
+      });
     }
   },
 );

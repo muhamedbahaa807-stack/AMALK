@@ -32,6 +32,7 @@ const loginPage = () => {
 
       console.log(err.response?.data);
     }
+    setLoading(false);
   };
   return (
     <div className=" bg-gradient-to-br from-[#012553] via-[#0A3D78] to-[#14B8A6]">
@@ -57,7 +58,7 @@ const loginPage = () => {
                 <div className="relative">
                   <FaEnvelope className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
                   <input
-                    type="text"
+                    type="email"
                     placeholder="Enter your email"
                     name="email"
                     value={formData.email}

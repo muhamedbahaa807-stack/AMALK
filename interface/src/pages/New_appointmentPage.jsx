@@ -5,6 +5,7 @@ const new_appointmentPage = () => {
   const navigate = useNavigate();
   const [departments, setdepartments] = useState([]);
   const [slots, setSlots] = useState([]);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     departmentId: '',
     date: '',
@@ -91,7 +92,11 @@ const new_appointmentPage = () => {
       await api.post('/appointment', formData);
       navigate('/profile');
     } catch (err) {
-      console.log(err.response.data);
+      if (err.response.data.error) {
+        setError(err.response.data.error[0].msg);
+      } else {
+        setError(err.response.data.message);
+      }
     }
   };
   return (
@@ -111,6 +116,11 @@ const new_appointmentPage = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
+              {error && (
+                <div className="bg-red-50 text-red-600 text-sm rounded-lg px-4 py-2 text-center border border-red-100">
+                  {error}
+                </div>
+              )}
               <label
                 htmlFor="select-dep"
                 className="block text-[#012553] font-semibold mb-2"

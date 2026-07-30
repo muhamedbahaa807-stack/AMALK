@@ -9,32 +9,38 @@ router.post('/signUP', checkSchema(validSchema), async (req, res) => {
   const result = validationResult(req);
   if (!result.isEmpty()) return res.status(400).send({ error: result.array() });
 
-  const { body } = req;
-  body.password = hashing(body.password);
-  const ifuserexist = await User.findOne({ email: body.email });
-  if (ifuserexist)
-    return res.status(404).send('this email is already have an account');
-  const newUser = await User.create(body);
-  res
-    .status(201)
-    .json({ msg: 'Your acc has succsefully created,now you can log in' });
+  const body = req.body;
+  const hashedPassword = hashing(body.password);
+  const ifEmailuserexist = await User.findOne({ email: body.email });
+  const ifPhoneuserexist = await User.findOne({ phone: body.phone });
+  if (ifEmailuserexist)
+    return res
+      .status(409)
+      .json({ message: 'This email is already have an account' });
+  if (ifPhoneuserexist)
+    return res
+      .status(409)
+      .json({ message: 'This phone number is already have an account' });
+  const newUser = await User.create({ ...body, password: hashedPassword });
+  res.status(201).json({ message: 'Account created successfully' });
 });
 
 router.post('/signIn', async (req, res, next) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.status(401).json({
-      error: 'Email or password is incorrect',
-    });
-  }
-  const ismatching = comparePass(password, user.password);
-  if (!ismatching)
-    return res.status(404).json({
-      error: 'Email or password is incorrect',
-    });
 
   try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({
+        message: 'Email or password is incorrect',
+      });
+    }
+    const ismatching = comparePass(password, user.password);
+    if (!ismatching)
+      return res.status(401).json({
+        message: 'Email or password is incorrect',
+      });
+
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
     res.cookie('refreshToken', refreshToken, {
@@ -50,13 +56,16 @@ router.post('/signIn', async (req, res, next) => {
       phone: user.phone,
       role: user.role,
     };
-    res.send({ message: 'LogIN successfully', userData, accessToken });
+    res
+      .status(200)
+      .json({ message: 'Login  successfully', userData, accessToken });
   } catch (err) {
     return res.status(500).json({
-      error: 'Internal Server Error',
+      message: 'Internal Server Error',
     });
   }
 });
+
 router.post('/logOut', (req, res) => {
   res.clearCookie('refreshToken');
 

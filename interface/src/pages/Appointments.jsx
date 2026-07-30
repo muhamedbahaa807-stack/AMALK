@@ -13,7 +13,7 @@ const MyAppointmentsPage = () => {
 
         setAppointments(result.data);
       } catch (err) {
-        console.log(err.data);
+        console.log(err.response.data.message);
       }
       setloading(false);
     };

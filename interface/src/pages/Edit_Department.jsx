@@ -28,7 +28,11 @@ const Edit_Department = () => {
           description: data.description,
         });
       } catch (err) {
-        console.log(err.response?.data || err.message);
+        if (err.response.data.error) {
+          setError(err.response.data.error[0].msg);
+        } else {
+          setError(err.response.data.message);
+        }
       } finally {
         setPageLoading(false);
       }
@@ -82,7 +86,7 @@ const Edit_Department = () => {
         <div className="px-8 pb-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="bg-red-100 text-red-600 p-3 rounded-lg">
+              <div className="bg-red-100 text-red-600 p-3 rounded-lg text-center">
                 {error}
               </div>
             )}

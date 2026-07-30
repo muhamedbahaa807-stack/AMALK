@@ -32,9 +32,14 @@ const UpdateProfile = () => {
       login(updatedUser.user);
       console.log(updatedUser.user);
       navigate('/profile');
-    } catch (error) {
-      setError('Failed to Update. Please try again.');
+    } catch (err) {
+      if (err.response.data.error) {
+        setError(err.response.data.error[0].msg);
+      } else {
+        setError(err.response.data.message);
+      }
     }
+    setLoading(false);
   };
 
   return (
